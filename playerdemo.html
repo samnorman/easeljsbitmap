@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Player Demo</title>
+    <script src="./createjs/easeljs.js"></script>
+    <script src="./createjs/preloadjs.js"></script>
+    <script src="lib/Player.js"></script>
+    <script src="lib/Vector2.js"></script>
+    <script src="lib/Edge.js"></script>
+    <script src="lib/Scope.js"></script>
+    <script src="lib/Switch.js"></script>
+    <style>
+    #demoCanvas{background-color:#fff;}
+    </style>
+
+    <script>
+
+        var stage;
+        var player;
+        var scope;
+        var switchb;
+        var ctx;
+        var edges = [];
+        var screenHeight = 300;
+        var screenWidth = 500;
+        
+        function init() {
+
+            stage = new createjs.Stage(document.getElementById("demoCanvas")); 
+
+            createjs.Ticker.on("tick", update);
+            createjs.Ticker.timingMode = createjs.Ticker.RAF;
+            createjs.Ticker.addEventListener("tick", stage);
+
+            switchb = new Switch();
+
+            switchb.draw(350,210);
+
+            player = new Player();
+
+            player.draw(225,250);
+
+            scope = new Scope();
+
+            scope.draw(100,100);
+            scope.play();
+
+            addEventListener("keydown", onDown);
+            addEventListener("keyup", onUp);
+
+            edges.push(new Edge(2,300-1, 500)); 
+
+            for(var i = 0; i<edges.length; i++){    
+                var edge = edges[i]; 
+                edge.render(); 
+            } 
+
+        }
+
+        function update(e)
+        {
+        
+            checkEdge();
+            player.update();
+            var pt = switchb.s.globalToLocal(player.getLeft(), player.getBottom());
+
+            var dx = switchb.getX() - player.getX();
+            var dy = switchb.getY() - player.getY();
+            var dist = Math.sqrt(dx * dx + dy * dy);
+
+            if(dist < 15 && switchb.hitOnce == 0) {
+                switchb.switchbut();
+                switchb.hitOnce = 1;
+                scope.pause();
+                setTimeout(function(){switchb.hitOnce = 0;}, 200);
+            }
+
+        }
+
+        function checkEdge() {
+
+            for (var i= 0; i<edges.length; i++){
+            var edge = edges[i]; 
+
+            if((player.getBottom() > edge.getTop()) && (player.getBottom() - player.vy < edge.getTop())) {
+
+                if((player.getLeft() < edge.getRight()) && (player.getRight()> edge.getLeft())) {
+
+                    player.connectedEdge = edge; 
+                    player.vy = 0;  
+                    player.setY(edge.pos.y); 
+                }
+            }   
+
+            }
+
+            if(player.connectedEdge){
+            
+            var edge = player.connectedEdge; 
+            if((player.getLeft()>edge.getRight()) || (player.getRight()<edge.getLeft()))
+                player.fall();
+
+            }
+
+            if(player.x < 0) {
+                player.setX(0);
+            } else if(player.getRight()>screenWidth) {
+                player.setX(screenWidth-player.width);
+            }
+
+        }
+
+        function onUp(e) {
+
+            player.keyPressed = false;
+            player.notMoving();
+            switch(e.keyCode)  {
+                case 37: 
+                   
+                break;
+
+                case 38: 
+                break;
+
+                case 39: 
+                break;
+
+                case 40:  
+                break;
+            }   
+        }
+
+        function onDown(e){
+
+        switch(e.keyCode)  {
+
+            case 37: 
+            player.moveLeft();
+            player.keyPressed = true;
+            break;
+
+            case 38: 
+            player.jump();
+
+            break;
+
+            case 39: 
+            //player.vx+=3;
+            player.moveRight();
+            player.keyPressed = true;
+            break;
+
+            case 32:
+            break;
+
+        }
+
+    }
+
+    </script>
+</head>
+<body onLoad="init();">
+    <canvas id="demoCanvas" width="500" height="300">
+        alternate content
+    </canvas>
+</body>
+</html>
